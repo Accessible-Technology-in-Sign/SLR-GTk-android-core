@@ -58,7 +58,6 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.7.0")
 
 
-//    implementation("com.android.support:appcompat-v7:28.0.0")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
@@ -81,7 +80,4 @@ dependencies {
     implementation("androidx.camera:camera-extensions:1.3.2")
 
     implementation("com.google.mediapipe:tasks-vision:0.20230731")
-    implementation("org.eclipse.angus:jakarta.mail:2.0.3")
-//    androidTestImplementation("com.android.support.test:runner:1.0.2")
-//    androidTestImplementation("com.android.support.test.espresso:espresso-core:3.0.2")
 }

@@ -48,11 +48,6 @@ implementation("org.tensorflow:tensorflow-lite-gpu:2.15.0")
 implementation("org.tensorflow:tensorflow-lite:2.13.0")
 ```
 
-Additional Dependencies for using the networked model manager feature (auto-update the model from our central server):
-```
-implementation("org.eclipse.angus:jakarta.mail:2.0.3")
-```
-
 Also, add this to the under `android {}`, to allow for a clean build since some JAR files in the above dependencies will have files that android cannot place into apks: 
 ```
 packaging { 
@@ -74,29 +69,7 @@ packaging {
 
 4. The simplest way to use core would be to use the `SimpleExecutionEngine` that has all the different components set up out of the box. For a more complex use case, you will have to setup your own pipeline or execution engine with the necessary callback mechanisms synced as SimpleExecutionEngine has done. Since this is a basic tutorial, we will have a global variable in our `MainActivity.kt` file: `lateinit var SLREngine: SimpleExecutionEngine`
 
-5. We now need to request the permissions that this app will require. This will mean that in the manifest file we have:
-```
-<uses-feature android:name="android.hardware.camera.any" />
-<uses-permission android:name="android.permission.CAMERA" />
-```
-Then, in the `MainActivity.kt` file, we add:
-```
-val PERMISSIONS_REQUIRED = arrayOf(Manifest.permission.CAMERA)
-PERMISSIONS_REQUIRED.forEach {
-    if (ContextCompat.checkSelfPermission(
-            baseContext,
-            it
-        ) != PackageManager.PERMISSION_GRANTED
-    ) {
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            if (!granted)
-                Toast.makeText(this, "$it permission ", Toast.LENGTH_SHORT).show()
-        }.launch(it)
-    }
-}
-```
-
-6. We can now initialise our engine: 
+5. We can now initialise our engine: 
 ```
 	SLREngine = SimpleExecutionEngine(this, {
             this.signPredictor.outputFilters.add(Thresholder(0.8F))
@@ -113,30 +86,30 @@ We also have a callback on each sign prediction, where we just display the sign 
 
 In our example, we don't want to trigger the rest of the pipeline in our engine, so we have made the buffer trigger a NoTrigger so that the buffer does not trigger the rest of the pipeline unless we manually tell it to.
 
-7. To add a preview feature, we are going to do the following: 
+6. To add a preview feature, we are going to do the following: 
 
-7a. Have an instance variable to keep track of the current prediction result. 
+6a. Have an instance variable to keep track of the current prediction result. 
 ```
 private val currResult = MutableStateFlow (
     ImageMPResultWrapper(Empties.EMPTY_HANDMARKER_RESULTS, Empties.EMPTY_BITMAP)
 )
 ```
 
-7b. Add a callback to the pose predictor to update the current result. 
+6b. Add a callback to the pose predictor to update the current result. 
 ```
 SLREngine.posePredictor.addCallback("preview_update") {
     mpResult -> currResult.value = mpResult
 }
 ```
 
-8. When we start working with compose, we will want to have a basic UI state that will be able to indicate when to send the camera images to the SLREngine, along with some UI state to be able to keep track of the current result.
+7. When we start working with compose, we will want to have a basic UI state that will be able to indicate when to send the camera images to the SLREngine, along with some UI state to be able to keep track of the current result.
 We can use compose to do this trivially in our Composable function:
 ```
 val mpResult by this.currResult.collectAsState()
 val interaction = remember { MutableInteractionSource() }
 val isCameraVisible by interaction.collectIsPressedAsState()
 ```
-8a. We want the engine to collect images when the camera is visible, and once the camera is not visible, we want it to trigger the rest of the pipeline. This way, we can form some basic interaction where the user taps on the screen to start the camera, the engine collects images from the camera till the user taps the screen again, in which case our buffer triggers. Since our buffer has by default a capacity of 60 images, this will mean that we only look at the last 60 images once that pipeline is triggered.
+7a. We want the engine to collect images when the camera is visible, and once the camera is not visible, we want it to trigger the rest of the pipeline. This way, we can form some basic interaction where the user taps on the screen to start the camera, the engine collects images from the camera till the user taps the screen again, in which case our buffer triggers. Since our buffer has by default a capacity of 60 images, this will mean that we only look at the last 60 images once that pipeline is triggered.
 ```
 if (isCameraVisible) {
     SLREngine.poll()
@@ -144,11 +117,10 @@ if (isCameraVisible) {
     if (SLREngine.buffer.trigger is NoTrigger)
         SLREngine.buffer.triggerCallbacks()
     SLREngine.pause()
-    // inputProgress.value = 0
 } 
 ```
 
-8b. We now define a parent Compose Scaffold where our app will reside, and look at the User Interactions inside this scaffold to trigger the camera - when the user taps once, the camera is visible, if the user taps again, the camera is not visible and so on:
+7b. We now define a parent Compose Scaffold where our app will reside, and look at the User Interactions inside this scaffold to trigger the camera - when the user taps once, the camera is visible, if the user taps again, the camera is not visible and so on:
 ```
 Scaffold (
     modifier = Modifier
@@ -165,7 +137,7 @@ Scaffold (
 ){ ... }
 ```
 
-8c. Our scaffold now has to have a box with 2 elements. The canvas element in the background is going to paint the current image and the box in the front is going to have our app content. We can use a HandPreviewPainter, that is specifically designed to paint the hand landmark results from mediapipe. This painter requires a definition of how to paint some basic concepts - a point, a line and an image - using which it can paint the preview. These definitions can be defined by implementing the PainterI interface, however, we have a solution that works for compose elements really well called the ComposePainterInterface, that just requires the compose object onto which we will paint our preview, and in this case that is our box. We also tell the preview painter to paint the IMAGE and the SKELETON, although you can configure it to paint just one of the 2 as well. Finally we pass in the image and the hand landmarks, with the image width and the height, to this painter. The main part out here is the image preprocessing. 
+7c. Our scaffold now has to have a box with 2 elements. The canvas element in the background is going to paint the current image and the box in the front is going to have our app content. We can use a HandPreviewPainter, that is specifically designed to paint the hand landmark results from mediapipe. This painter requires a definition of how to paint some basic concepts - a point, a line and an image - using which it can paint the preview. These definitions can be defined by implementing the PainterI interface, however, we have a solution that works for compose elements really well called the ComposePainterInterface, that just requires the compose object onto which we will paint our preview, and in this case that is our box. We also tell the preview painter to paint the IMAGE and the SKELETON, although you can configure it to paint just one of the 2 as well. Finally we pass in the image and the hand landmarks, with the image width and the height, to this painter. The main part out here is the image preprocessing. 
 ```
 {
         padding ->
@@ -228,4 +200,4 @@ Scaffold (
 }
 ```
 
-9. Once you define your Content composable function, your app is good to go!
+8. Once you define your Content composable function, your app is good to go!

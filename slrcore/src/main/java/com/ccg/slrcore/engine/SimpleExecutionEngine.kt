@@ -14,12 +14,12 @@ import com.ccg.slrcore.camera.StreamCameraXI
 import com.ccg.slrcore.common.Config
 import com.ccg.slrcore.model.CompleteBufferToTensor
 import com.ccg.slrcore.model.MediapipeHandModelManager
-import com.ccg.slrcore.model.NetworkModelLoader
 import com.ccg.slrcore.model.PaddedBufferToTensor
 import com.ccg.slrcore.model.SLRTfLiteModel
 import com.ccg.slrcore.system.Buffer
 import com.google.mediapipe.framework.image.BitmapImageBuilder
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarkerResult
+import java.io.File
 import java.util.concurrent.Executors
 
 class SimpleExecutionEngine(private val activity: Activity, onInit: SimpleExecutionEngine.() -> Unit = {}, onCycle: (String) -> Unit = {}) {
@@ -44,7 +44,14 @@ class SimpleExecutionEngine(private val activity: Activity, onInit: SimpleExecut
         this.cameraInterface.pause(activity)
     }
 
-    lateinit var signPredictor: SLRTfLiteModel<String>
+    val signPredictor = SLRTfLiteModel(
+        File("${activity.cacheDir}/model")
+            .apply { writeBytes(activity.assets.open("model_2.tflite").readBytes()) },
+        activity.assets.open("signsList.txt")
+            .bufferedReader().use{ reader ->
+                reader.readText()
+            }.split("\n")
+    )
 
     init {
         requestAppPermissions()
@@ -79,37 +86,39 @@ class SimpleExecutionEngine(private val activity: Activity, onInit: SimpleExecut
             if (mpResult.result.landmarks().size > 0)
                 buffer.addElement(mpResult.result)
         }
-        NetworkModelLoader(
-            activity.baseContext,
-            "https://ebisu.cc.gatech.edu:11223/model-store/model/tflite/250-signs",
-            "test"
-        ) {
-            signPredictor = it
-            signPredictor.addCallback("user_cb") {
-                    sign -> onCycle(sign)
-            }
 
-            buffer.addCallback("asl_trigger") {
-                    bufferedResults ->
-                val inputArray = mutableListOf<Float>() // the input points that can be sent to mediapipe
+        buffer.addCallback("asl_trigger") { bufferedResults ->
+            val inputArray =
+                mutableListOf<Float>() // the input points that can be sent to mediapipe
 
-                if (isInterpolating && bufferedResults.size < Config.NUM_FRAMES_PREDICTION && bufferedResults.isNotEmpty()) {
-                    if (!PaddedBufferToTensor<HandLandmarkerResult>().createTensor(bufferedResults, inputArray)) {
-                        return@addCallback
-                    }
-
-                } else if (bufferedResults.isNotEmpty() && bufferedResults.size >= 60){
-                    if (!CompleteBufferToTensor<HandLandmarkerResult>().createTensor(bufferedResults, inputArray)) {
-                        return@addCallback
-                    }
+            if (isInterpolating && bufferedResults.size < Config.NUM_FRAMES_PREDICTION && bufferedResults.isNotEmpty()) {
+                if (!PaddedBufferToTensor<HandLandmarkerResult>().createTensor(
+                        bufferedResults,
+                        inputArray
+                    )
+                ) {
+                    return@addCallback
                 }
 
-                if (inputArray.isNotEmpty()) {
-                    signPredictor.runModel(inputArray.toFloatArray())
+            } else if (bufferedResults.isNotEmpty() && bufferedResults.size >= 60) {
+                if (!CompleteBufferToTensor<HandLandmarkerResult>().createTensor(
+                        bufferedResults,
+                        inputArray
+                    )
+                ) {
+                    return@addCallback
                 }
             }
-            onInit()
+
+            if (inputArray.isNotEmpty()) {
+                signPredictor.runModel(inputArray.toFloatArray())
+            }
         }
+        signPredictor.addCallback("user_cb") {
+                sign -> onCycle(sign)
+        }
+
+        onInit()
     }
 
     private fun requestAppPermissions() {

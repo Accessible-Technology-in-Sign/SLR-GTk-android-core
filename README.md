@@ -153,33 +153,7 @@ Scaffold (
     ){
                 onDraw = {
                     if (mpResult.image != Empties.EMPTY_BITMAP) {
-                        val resultBmp = BitmapExtractor.extract(mpResult.image)
-                        val targetAR = maxOf(size.width / resultBmp.width, size.height / resultBmp.height)
-                        val img = Bitmap.createBitmap(
-                            resultBmp,
-                            0,
-                            0,
-                            resultBmp.width,
-                            resultBmp.height,
-                            Matrix().also {
-                                it.setRectToRect(
-                                    RectF(
-                                        0f,
-                                        0f,
-                                        resultBmp.width.toFloat(),
-                                        resultBmp.height.toFloat()
-                                    ),
-                                    RectF(
-                                        0f,
-                                        0f,
-                                        resultBmp.width * targetAR,
-                                        resultBmp.height * targetAR
-                                    ),
-                                    Matrix.ScaleToFit.FILL
-                                )
-                            },
-                            true
-                        )
+                        val img = mpResult.getBitmap(size)
                         HandPreviewPainter(
                             ComposeCanvasPainterInterface(
                                 this
@@ -201,3 +175,8 @@ Scaffold (
 ```
 
 8. Once you define your Content composable function, your app is good to go!
+
+# Acknowledgements
+Designed and maintained by 
+* Ananay Vikram Gupta (ananay@gatech.edu)
+* Unnathi U Kumar (unnathikumar@gatech.edu)

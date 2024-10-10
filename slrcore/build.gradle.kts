@@ -78,6 +78,8 @@ dependencies {
     implementation("androidx.camera:camera-video:1.3.2")
     implementation("androidx.camera:camera-view:1.3.2")
     implementation("androidx.camera:camera-extensions:1.3.2")
-
+    implementation("androidx.media3:media3-exoplayer:1.3.1")
+    implementation("androidx.media3:media3-exoplayer-dash:1.3.1")
+    implementation("androidx.media3:media3-ui:1.3.1")
     implementation("com.google.mediapipe:tasks-vision:0.20230731")
 }

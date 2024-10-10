@@ -74,9 +74,33 @@ class ASLVideoView @JvmOverloads constructor(
             exoPlayer = ExoPlayer.Builder(context).build()
         }
 
-        // Handle special cases for certain words
         var sign = word
-        if (sign == "for" || sign == "if") sign = "_$sign"
+        sign = sign.lowercase()
+
+        // Handle special cases for certain words
+        if (word == "cart" || word == "carriage") { sign = "cart_carriage"}
+        if (word == "he" || word == "she" || word == "it") { sign = "he_she_it" }
+        if (word == "inside" || word == "in") { sign = "inside_in" }
+        if (word == "light" || word == "lightbulb") { sign = "light_bulb"}
+        if (word == "mine" || word == "my" ) { sign = "mine_my" }
+        if (word == "need" || word == "need to") { sign = "need_need_to" }
+        if (word == "try" || word == "try to") { sign = "try_try_to" }
+        if (word == "we" || word == "us") { sign = "we_us" }
+        if (word == "soda" || word == "pop") { sign = "soda_pop" }
+        if (word == "break") { sign = "break_" }
+        if (word == "catch") { sign = "catch_" }
+        if (word == "do") { sign = "do_" }
+        if (word == "flip-flop") { sign = "flip_flop" }
+        if (word == "for") { sign = "for_" }
+        if (word == "if") { sign = "if_" }
+        if (word == "long") { sign = "long_" }
+        if (word == "new") { sign = "new_" }
+        if (word == "short") { sign = "short_" }
+        if (word == "throw") { sign = "throw_" }
+        if (word == "night-night") { sign = "night_night" }
+
+        // Combine words with underscores and remove apostrophes
+        sign = sign.replace(" ", "_").replace("'", "")
 
         val resourceId = context.resources.getIdentifier(sign.lowercase(), "raw", context.packageName)
 
@@ -128,9 +152,7 @@ class ASLVideoView @JvmOverloads constructor(
 
     @OptIn(UnstableApi::class) private fun showPlayerInDialog(word: String) {
         // Convert word to camel case
-        val camelCaseWord = word.split(" ").joinToString("") {
-            it.lowercase().replaceFirstChar(Char::uppercase)
-        }
+        val camelCaseWord = word.lowercase().replaceFirstChar(Char::uppercase)
 
         // Dismiss any existing dialog to prevent stacking multiple dialogs
         dialog?.dismiss()

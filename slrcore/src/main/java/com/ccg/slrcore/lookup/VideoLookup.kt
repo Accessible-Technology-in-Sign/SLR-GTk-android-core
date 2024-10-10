@@ -20,6 +20,18 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 
+/**
+ * A custom ViewGroup for displaying American Sign Language (ASL) videos based on a given word.
+ *
+ * This class handles the retrieval, playback, and display of ASL videos for requested words. It utilizes
+ * ExoPlayer for video playback and shows the video within an AlertDialog. The videos are sourced from
+ * the app's raw resources.
+ *
+ * @constructor Creates an ASLVideoView instance.
+ * @param context The context to be used for creating the view.
+ * @param attrs The attribute set to be used for the view (optional).
+ * @param defStyleAttr The default style attribute to be applied to the view (optional).
+ */
 class ASLVideoView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
@@ -36,6 +48,15 @@ class ASLVideoView @JvmOverloads constructor(
         Log.d("ASLVideoView", "Initialized")
     }
 
+    /**
+     * Sets the word for which the ASL video should be played.
+     *
+     * This function initializes the ExoPlayer if necessary, prepares the media item based on the
+     * provided word, and displays the video in an AlertDialog once it is ready.
+     *
+     * @param word The word for which the ASL video should be displayed. If the word is null or empty,
+     * the dialog will be dismissed and no action will be taken.
+     */
     fun setWord(word: String?) {
         // Store the word as a class property
         this.word = word
@@ -93,7 +114,12 @@ class ASLVideoView @JvmOverloads constructor(
     }
 
 
-    // Method to release the ExoPlayer when no longer needed
+    /**
+     * Releases the ExoPlayer and dismisses any active dialog.
+     *
+     * This method should be called when the ASLVideoView is no longer needed to ensure that system
+     * resources are properly released.
+     */
     fun releasePlayer() {
         exoPlayer?.release()
         exoPlayer = null
@@ -188,7 +214,11 @@ class ASLVideoView @JvmOverloads constructor(
     }
 
 
-    // Show an "Invalid word" dialog
+    /**
+     * Displays an "Invalid Word" dialog if the requested word is not found in the resources.
+     *
+     * This dialog informs the user that the word they entered is invalid.
+     */
     private fun showInvalidWordDialog() {
         // Dismiss any existing dialog if it's showing
         dialog?.dismiss()

@@ -10,9 +10,6 @@ The `ASLVideoView` module is a custom Android `ViewGroup` that provides function
 - Automatically handle invalid word inputs.
 - Reuse video player resources to optimize performance.
 
-## Usage Example
-The following example demonstrates how to use `ASLVideoView` in an activity with Jetpack Compose.
-
 ## Installation
 Add the following packages to your app level build.gradle
 ```kotlin
@@ -20,6 +17,9 @@ implementation("androidx.media3:media3-exoplayer:1.3.1")
 implementation("androidx.media3:media3-exoplayer-dash:1.3.1")
 implementation("androidx.media3:media3-ui:1.3.1")
 ```
+
+## Usage Example
+The following example demonstrates how to use `ASLVideoView` in an activity with Jetpack Compose.
 
 ### Step 1: Add `ASLVideoView` to Your Layout
 You can use `ASLVideoView` inside a `Composable` using `AndroidView` from Jetpack Compose. Here is a simple example that shows entering a word into a text field and showing the ASL video on click of a button:
@@ -46,81 +46,70 @@ class MainActivity : ComponentActivity() {
          SLRView()
       }
    }
+    
+    @Composable
+    fun SLRView() {
+        var word by remember { mutableStateOf<String?>(null) }
+        var inputText by remember { mutableStateOf("") }
+        var trigger by remember { mutableStateOf(0) } // Trigger to force dialog show
+        val context = LocalContext.current
 
-   @Composable
-   fun SLRView() {
-      var word by remember { mutableStateOf<String?>(null) }
-      var inputText by remember { mutableStateOf("") }
-      var trigger by remember { mutableStateOf(0) } // Trigger to force dialog show
-      val context = LocalContext.current
-
-      Scaffold(
-         modifier = Modifier.fillMaxSize(),
-         floatingActionButton = {
-            ExtendedFloatingActionButton(
-               onClick = {
-                  word = inputText
-                  trigger++ // Increment the trigger to force the dialog to be shown again
-               },
-               text = { Text("Show ASL Video") }
-            )
-         },
-         floatingActionButtonPosition = FabPosition.Center
-      ) { padding ->
-         Box(
-            modifier = Modifier
-               .fillMaxSize()
-               .padding(padding)
-         ) {
-            Column(
-               horizontalAlignment = Alignment.CenterHorizontally,
-               modifier = Modifier.fillMaxSize()
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            floatingActionButton = {
+                ExtendedFloatingActionButton(
+                    onClick = {
+                        word = inputText
+                        trigger++ // Increment the trigger to force the dialog to be shown again
+                    },
+                    content = { Text("Show ASL Video / Input") }
+                )
+            },
+            floatingActionButtonPosition = FabPosition.Center
+        ) { padding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
             ) {
-               // Input field for the word
-               TextField(
-                  value = inputText,
-                  onValueChange = { inputText = it },
-                  label = { Text("Enter a word") },
-                  modifier = Modifier
-                     .padding(16.dp)
-                     .fillMaxWidth()
-               )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    TextField(
+                        value = inputText,
+                        onValueChange = { inputText = it },
+                        label = { Text("Enter a word") },
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .fillMaxWidth()
+                    )
 
-               // Button to trigger video playback
-               Button(onClick = {
-                  word = inputText
-                  trigger++ // Increment the trigger to force the dialog to be shown again
-               }) {
-                  Text("Play Video")
-               }
-
-               // Show ASLVideoView if the word is set
-               if (!word.isNullOrEmpty()) {
-                  AndroidView(
-                     factory = {
-                        ASLVideoView(context).apply {
-                           setWord(word)
-                        }
-                     },
-                     modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(16.dp),
-                     update = { aslVideoView ->
-                        aslVideoView.setWord(word)
-                        // Forcefully show the dialog again using the trigger
-                        if (trigger > 0) {
-                           aslVideoView.setWord(word)
-                        }
-                     }
-                  )
-               } else {
-                  Text("No video to display", Modifier.padding(16.dp))
-               }
+                    if (!word.isNullOrEmpty()) {
+                        AndroidView(
+                            factory = {
+                                ASLVideoView(context).apply {
+                                    setWord(word)
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                                .padding(16.dp),
+                            update = { aslVideoView ->
+                                aslVideoView.setWord(word)
+                                if (trigger > 0) {
+                                    aslVideoView.setWord(word)
+                                }
+                            }
+                        )
+                    } else {
+                        Text("No video to display", Modifier.padding(16.dp))
+                    }
+                }
             }
-         }
-      }
-   }
+        }
+    }
 }
 ```
 

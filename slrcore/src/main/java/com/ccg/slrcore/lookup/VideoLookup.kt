@@ -166,6 +166,7 @@ class ASLVideoView @JvmOverloads constructor(
                 )
                 setShutterBackgroundColor(android.graphics.Color.TRANSPARENT) // Set shutter background to transparent
                 setBackgroundColor(android.graphics.Color.TRANSPARENT) // Set PlayerView background to transparent
+                useController = false // Disable player controls
             }
         }
 

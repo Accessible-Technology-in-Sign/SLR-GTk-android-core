@@ -19,7 +19,7 @@ SLR Core currently has the following components:
     - Common: This contains some common utility functions and types.
 
 # Getting Started with the SLRCore Library
-1. Download and store the SLRCore aar in a known directory on your system. Ensure that the MediaPipe model, `hand-landmarker.task`, is also in the `res/assets` folder of your project.  
+1. Download and store the SLRCore aar in a known directory on your system. Ensure that the MediaPipe model, `hand-landmarker.task`, is also in the `app/src/main/assets` folder of your project.  
 2.  In your build.gradle.kts for your app (not project), you need to add the dependency:
 ```
 implementation(files("../slrcore-release.aar"))

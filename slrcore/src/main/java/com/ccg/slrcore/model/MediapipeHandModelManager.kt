@@ -12,13 +12,14 @@ import com.google.mediapipe.tasks.vision.core.RunningMode
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarker
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarkerResult
 import java.lang.RuntimeException
+import java.util.concurrent.ConcurrentHashMap
 
 class MediapipeHandModelManager {
     private val graph: HandLandmarker
-    private val callbacks: HashMap<String, SLREventHandler<ImageMPResultWrapper<HandLandmarkerResult>>> = HashMap()
-    private val errorCallbacks: HashMap<String, SLREventHandler<RuntimeException>> = HashMap()
+    private val callbacks: ConcurrentHashMap<String, SLREventHandler<ImageMPResultWrapper<HandLandmarkerResult>>> = ConcurrentHashMap()
+    private val errorCallbacks: ConcurrentHashMap<String, SLREventHandler<RuntimeException>> = ConcurrentHashMap()
 
-    private val outputInputLookup: HashMap<Long, MPImage> = HashMap()
+    private val outputInputLookup: ConcurrentHashMap<Long, MPImage> = ConcurrentHashMap()
     private val runningMode: RunningMode
     private val context: Context
     private val resources: Resources
@@ -59,6 +60,8 @@ class MediapipeHandModelManager {
     }
 
     fun single(img: MPImage, timestamp: Long) {
+        cleanupOldEntries(timestamp)
+
         when (runningMode) {
             RunningMode.LIVE_STREAM -> {
                 outputInputLookup[timestamp] = img
@@ -81,12 +84,16 @@ class MediapipeHandModelManager {
         }
     }
 
+    private fun cleanupOldEntries(timestamp: Long) {
+        outputInputLookup.keys.removeIf { it < timestamp }
+    }
+
     fun addCallback(name: String, callback: SLREventHandler<ImageMPResultWrapper<HandLandmarkerResult>>) {
         this.callbacks[name] = callback
     }
 
     fun removeCallback(name: String) {
-        if (name in this.callbacks) this.callbacks.remove(name)
+        if (this.callbacks.containsKey(name)) this.callbacks.remove(name)
     }
 
     fun addErrorCallback(name: String, callback: SLREventHandler<RuntimeException>) {
@@ -94,6 +101,6 @@ class MediapipeHandModelManager {
     }
 
     fun removeErrorCallback(name: String) {
-        if (name in this.errorCallbacks) this.callbacks.remove(name)
+        if (this.errorCallbacks.containsKey(name)) this.errorCallbacks.remove(name)
     }
 }

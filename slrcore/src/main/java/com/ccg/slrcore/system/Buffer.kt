@@ -6,20 +6,38 @@ import java.util.LinkedList
 import java.util.HashMap
 
 /**
- * Buffer will accumulate objects till it's capacity is reached, then it will drop oldest objects and keep newest ones to maintain the capacity.
- * @author Ananay Vikram Gupta
- * @version 1.1.0
+ * A buffer that accumulates objects until a specified capacity is reached.
+ * When the buffer is full, it removes the oldest objects to maintain the capacity,
+ * and triggers callbacks for processing the accumulated objects.
+ *
+ * @param <T> The type of elements stored in the buffer.
  */
 class Buffer<T> {
-    // the internal buffer that actually stores the objects
+    /**
+     * The internal buffer for storing objects.
+     */
     private val internalBuffer: LinkedList<T> = LinkedList()
 
-    // callbacks that need to be made when the buffer is full
+    /**
+     * Callbacks to be triggered when the buffer reaches its trigger condition.
+     */
     private val callbacks: HashMap<String, SLREventHandler<List<T>>> = HashMap()
 
+    /**
+     * Strategy to determine when the buffer should trigger callbacks.
+     */
     var trigger: BufferTriggerStrategy<T> = CapacityFullTrigger<T>(60)
+
+    /**
+     * Strategy to determine how the buffer should fill when new elements are added.
+     */
     var filler: BufferFillStrategy<T> = CapacityFill<T>()
 
+    /**
+     * Adds an element to the buffer. If the trigger condition is met, the callbacks are executed.
+     *
+     * @param elem The element to add to the buffer.
+     */
     fun addElement(elem: T) {
         Log.d("BUFFER", "Add Element")
         val triggered = trigger.check(this.internalBuffer)
@@ -27,31 +45,54 @@ class Buffer<T> {
         if (triggered) triggerCallbacks()
     }
 
+    /**
+     * Triggers all registered callbacks with the current state of the buffer.
+     */
     fun triggerCallbacks() {
         Log.d("BUFFER", "Trigger Callbacks")
         callbacks.forEach { (_, cb) -> cb.handle(this.internalBuffer.toList()) }
     }
 
     /**
-     * Add the callbacks required on buffer being full
+     * Adds a callback to be executed when the buffer trigger condition is met.
+     *
+     * @param name     The name of the callback.
+     * @param callback The callback handler to execute.
      */
     fun addCallback(name: String, callback: SLREventHandler<List<T>>) {
         this.callbacks[name] = callback
     }
 
+    /**
+     * Removes a previously registered callback.
+     *
+     * @param name The name of the callback to remove.
+     */
     fun removeCallback(name: String) {
         if (name in this.callbacks) this.callbacks.remove(name)
     }
 
+
+    /**
+     * Clears all registered callbacks.
+     */
     fun clearCallbacks() {
         this.callbacks.clear()
     }
 
+    /**
+     * Clears the buffer, removing all elements.
+     */
     fun clear() {
         Log.d("BUFFER", "Clear")
         this.internalBuffer.clear()
     }
 
+    /**
+     * Gets the current size of the buffer.
+     *
+     * @return The number of elements in the buffer.
+     */
     val size: Int
         get() {
             return this.internalBuffer.size

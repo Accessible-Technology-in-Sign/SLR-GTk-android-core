@@ -26,24 +26,57 @@ class SimpleExecutionEngine(private val activity: Activity, onInit: SimpleExecut
     private val executor = Executors.newSingleThreadExecutor()
     private val PERMISSIONS_REQUIRED = arrayOf(Manifest.permission.CAMERA)
 
+    /**
+     * Indicates whether the front-facing camera is currently active.
+     */
     var isFrontCamera = true
+
+    /**
+     * Interface for managing camera operations and callbacks.
+     */
     val cameraInterface: CameraI<UseCase,  ImageProxy> = StreamCameraXI(executor)
+
+    /**
+     * Buffer for storing hand landmark results.
+     */
     val buffer = Buffer<HandLandmarkerResult>()
+
+    /**
+     * Model manager for processing MediaPipe hand landmarks.
+     */
     var posePredictor = MediapipeHandModelManager(activity.baseContext, activity.resources)
+
+    /**
+     * Flag to indicate if the camera is actively polling for frames.
+     */
     private var activelyPoll = false
+
+    /**
+     * Flag to indicate whether to interpolate frames in the prediction buffer.
+     */
     var isInterpolating = false
 
+    /**
+     * Starts polling the camera and clearing the buffer for new hand landmark results.
+     */
     fun poll() {
         this.activelyPoll = true
         buffer.clear()
         this.cameraInterface.poll(activity)
     }
+
+    /**
+     * Pauses the camera and clears the buffer.
+     */
     fun pause() {
         this.activelyPoll = false
         buffer.clear()
         this.cameraInterface.pause(activity)
     }
 
+    /**
+     * TensorFlow Lite model for predicting ASL signs.
+     */
     val signPredictor = SLRTfLiteModel(
         File("${activity.cacheDir}/model")
             .apply { writeBytes(activity.assets.open("model_2.tflite").readBytes()) },
@@ -53,6 +86,9 @@ class SimpleExecutionEngine(private val activity: Activity, onInit: SimpleExecut
             }.split("\n")
     )
 
+    /**
+     * Initializes camera and buffer callbacks for processing hand landmarks and predicting signs.
+     */
     init {
         requestAppPermissions()
 
@@ -121,6 +157,9 @@ class SimpleExecutionEngine(private val activity: Activity, onInit: SimpleExecut
         onInit()
     }
 
+    /**
+     * Requests camera permissions from the user if they are not already granted.
+     */
     private fun requestAppPermissions() {
         PERMISSIONS_REQUIRED.forEach {
             if (ContextCompat.checkSelfPermission(
